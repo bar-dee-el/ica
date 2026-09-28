@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ICA // Classified</title>
+<!-- YouTube gömülü oynatıcı referrer bilgisi gelmezse "Hata 153" veriyor; YouTube'un önerdiği politika bu -->
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<style>
+  /* Sunumdaki Hitman diliyle aynı: koyu zemin, C8102E kırmızı, geniş harf aralığı */
+  :root { --red: #C8102E; --bg: #111111; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: #fff;
+    font-family: Helvetica, Arial, sans-serif; overflow: hidden; }
+  #gate { position: fixed; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 28px; padding: 24px;
+    text-align: center; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .bars { display: flex; gap: 4px; height: 44px; }
+  .bars i { background: var(--red); display: block; }
+  .tag { color: var(--red); font-weight: bold; letter-spacing: .4em; font-size: 13px; }
+  h1 { margin: 0; font-size: 30px; line-height: 1.2; }
+  .btn { border: 2px solid var(--red); color: #fff; padding: 16px 28px;
+    letter-spacing: .25em; font-weight: bold; font-size: 14px; animation: pulse 1.4s infinite; }
+  @keyframes pulse { 50% { background: var(--red); } }
+  #wrap { position: fixed; inset: 0; background: #000; visibility: hidden; }
+  #wrap.on { visibility: visible; }
+  #player { width: 100%; height: 100%; }
+  /* Videonun üstünde görünmez kalkan: dokunuşlar oynatıcıya ulaşmaz, durdurulamaz */
+  #shield { position: absolute; inset: 0; z-index: 2; }
+</style>
+</head>
+<body>
+<div id="wrap"><div id="player"></div><div id="shield"></div></div>
+<div id="gate">
+  <div class="bars" id="bars"></div>
+  <div class="tag">ICA // CLASSIFIED</div>
+  <h1>Agent 47's secret weapon<br>was never a briefcase.</h1>
+  <div class="btn" id="btn">TAP TO UNLOCK</div>
+</div>
+<script>
+  // Sunumdaki barkod çubuklarının genişlikleri (slayttaki grupların oranları)
+  [3,2,4,2,3,5,2,3,2,4,3,2].forEach(w => {
+    const i = document.createElement('i'); i.style.width = (w * 2) + 'px';
+    document.getElementById('bars').appendChild(i);
+  });
+
+  // Telefon tarayıcıları dokunuş olmadan sesli oynatmaya izin vermiyor ve hiçbir sayfa
+  // sistem sesini değiştiremez. Bu yüzden oynatıcı baştan gizli yüklenir, "TAP TO UNLOCK"
+  // dokunuşu içinde sesi açıp başlatırız; ses telefonun o anki seviyesinde çalar.
+  // Video: kuflierl/customrickroll'un kullandığı reklamsız kopya (resmî klipte reklam çıkabiliyor).
+  const VIDEO_ID = 'QtBDL8EiNZo';
+  let player, ready = false, started = false;
+
+  const tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+
+  function onYouTubeIframeAPIReady() {
+    player = new YT.Player('player', {
+      host: 'https://www.youtube-nocookie.com',   // çerezsiz mod: ziyaretçiye YouTube çerezi yazılmaz
+      videoId: VIDEO_ID,
+      playerVars: { controls: 0, disablekb: 1, playsinline: 1, rel: 0, loop: 1, playlist: VIDEO_ID,
+                    modestbranding: 1, fs: 0, origin: location.origin },
+      events: {
+        // Hazır olmadan yapılan dokunuş sesi açamaz (ses izni dokunuş anına bağlı); o dokunuş
+        // boşa gider, bir sonraki dokunuş çalışır.
+        onReady: () => { ready = true; },
+        onStateChange: onState,
+        onError: (e) => console.error('YouTube player error', e.data)
+      }
+    });
+  }
+
+  // Bir şekilde durursa (duraklatma, bitiş) hemen yeniden başlat: kaçış yok.
+  function onState(e) {
+    if (!started) return;
+    if (e.data === YT.PlayerState.PAUSED) player.playVideo();
+    if (e.data === YT.PlayerState.ENDED) { player.seekTo(0); player.playVideo(); }
+  }
+
+  function start() {
+    if (started) return;
+    if (!ready) { console.warn('Player not ready yet, waiting for next tap'); return; }
+    started = true;
+    player.unMute();
+    player.setVolume(100);   // oynatıcının kendi sesi; telefonun sistem sesi değil
+    player.playVideo();
+    document.getElementById('wrap').classList.add('on');
+    document.getElementById('gate').style.display = 'none';
+  }
+  document.getElementById('gate').addEventListener('click', start);
+</script>
+</body>
+</html>
